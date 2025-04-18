@@ -2,7 +2,6 @@ import time
 from cell import Cell
 import random
 
-
 class Maze():
     def __init__(
             self, 
@@ -24,6 +23,7 @@ class Maze():
         self.cell_size_y = cell_size_y
         self.win = win
         if seed:
+            print("seeding!")
             random.seed(seed)
 
         self.create_cells()
@@ -59,7 +59,6 @@ class Maze():
 
     def break_entrance_and_exit(self):
         self.cells[0][0].has_top_wall = False
-        self.cells[0][0].begin_cell = True
         self.draw_cell(0,0)
         self.cells[self.num_cols - 1][self.num_rows - 1].has_bottom_wall = False
         self.cells[self.num_cols - 1][self.num_rows - 1].end_cell = True
@@ -123,71 +122,79 @@ class Maze():
         return self.solve_r(i, j)
 
     def solve_r(self, i, j):
-       time.sleep(1)
-       print("entering solve_r")
-       self.animate()
-       current = self.cells[i][j]
-       current.visited = True
-       
-       if current.end_cell:
-           print("return True")
-           return True
+        self.animate()
+        current = self.cells[i][j]
+        current.visited = True
 
-#       # go left
-       if (not self.cells[i][j].has_left_wall and
-           i > 0 and
-           not self.cells[i-1][j].has_right_wall and
-           not self.cells[i-1][j].visited):
-           self.cells[i][j].draw_move(self.cells[i-1][j])
-           print("recursive left")
-           return self.solve_r(i-1, j)
-       else:
-           print("go left")
-           #self.cells[i][j].draw_move(self.cells[i-1][j], undo=True)
-           self.cells[i][j].visited = False
+        if current.end_cell:
+            return True
 
+        if self.check_left(i, j):
+            current.draw_move(self.cells[i-1][j])
+            if self.solve_r(i-1, j):
+                return True
+            else:
+                self.cells[i][j].draw_move(self.cells[i-1][j], undo=True)
+
+        if self.check_up(i, j): 
+            current.draw_move(self.cells[i][j-1])
+            if self.solve_r(i, j-1):
+                return True
+            else:
+                self.cells[i][j].draw_move(self.cells[i][j-1], undo=True)
+
+        if self.check_right(i, j):
+            current.draw_move(self.cells[i+1][j])
+            if self.solve_r(i+1, j):
+                return True
+            else:
+                self.cells[i][j].draw_move(self.cells[i+1][j], undo=True)
+
+        if self.check_down(i, j):
+            current.draw_move(self.cells[i][j+1])
+            if self.solve_r(i, j+1):
+                return True
+            else:
+                self.cells[i][j].draw_move(self.cells[i][j+1], undo=True)
+
+        return False
+
+    def check_left(self, i, j):        
+        # go left
+        if not self.cells[i][j].has_left_wall:
+            if i > 0:
+                if not self.cells[i-1][j].has_right_wall:
+                    if not self.cells[i-1][j].visited:
+                        return True
+        else:
+            return False
+
+    def check_up(self, i, j):  
         # go up
-       if (not self.cells[i][j].has_top_wall and
-           j > 0 and
-           not self.cells[i][j-1].has_bottom_wall and
-           not self.cells[i][j-1].visited):
-           self.cells[i][j].draw_move(self.cells[i][j-1])
-           print("recursive up")
-           return self.solve_r(i, j-1)
-       else:
-           print("go up")
-           #self.cells[i][j].draw_move(self.cells[i][j-1], undo=True)
-           self.cells[i][j].visited = False
+        if not self.cells[i][j].has_top_wall:
+            if j > 0:
+                if not self.cells[i][j-1].has_bottom_wall:
+                    if not self.cells[i][j-1].visited:
+                        return True
+        else:
+            return False
 
+    def check_right(self, i, j):
         # go right
-       if not self.cells[i][j].has_right_wall:
-           if i < self.num_cols - 1:
-               if not self.cells[i+1][j].has_left_wall:
-                  if not self.cells[i+1][j].visited:
-                       self.cells[i][j].draw_move(self.cells[i+1][j])
-                       print("recursive right")
-                       return self.solve_r(i+1, j)
-       else:
-           print("go right")
-           #self.cells[i][j].draw_move(self.cells[i+1][j], undo=True)
-           self.cells[i][j].visited = False
+        if not self.cells[i][j].has_right_wall:
+            if i < self.num_cols - 1:
+                if not self.cells[i+1][j].has_left_wall:
+                    if not self.cells[i+1][j].visited:
+                        return True
+        else:
+            return False
 
+    def check_down(self, i, j):
         # go down
-       if (not self.cells[i][j].has_bottom_wall and
-           j < self.num_rows - 1 and
-           not self.cells[i][j+1].has_top_wall and
-           not self.cells[i][j+1].visited):
-           self.cells[i][j].draw_move(self.cells[i][j+1])
-           print("recursive down")
-           return self.solve_r(i, j+1)
-       else:
-           print("go down")
-           #self.cells[i][j].draw_move(self.cells[i][j+1], undo=True)
-           self.cells[i][j].visited = False
-
-       print("returning False")
-       return False
-
-                                     
-        
-       
+        if not self.cells[i][j].has_bottom_wall:
+            if j < self.num_rows - 1:
+                if not self.cells[i][j+1].has_top_wall: 
+                    if not self.cells[i][j+1].visited:
+                        return True
+        else:
+            return False
